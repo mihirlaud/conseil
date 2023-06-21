@@ -1,13 +1,13 @@
 # GITBOOK-498: Update CPL File
 
-## Placeholder Subheading
-placeholder text for this paragraph
+## Subheading 1 (edited)
+Placeholder paragraph 1 (also edited)
 File: `.gitbook/assets/Panelized Board CPL (2).csv`
 ```diff
 BBinary files /dev/null and b/.gitbook/assets/Panelized Board CPL (2).csv differ
 ```
-## Placeholder Subheading
-placeholder text for this paragraph
+## Subheading 2
+Placeholder paragraph 2
 File: `hardware/design-fundamentals/gear-ratios.md`
 ```diff
  
@@ -19,8 +19,8 @@ File: `hardware/design-fundamentals/gear-ratios.md`
  Gear ratios are often simplified fractions of the number of teeth on each gear. This is because (at least in Vex) gears have a proportional number of teeth to their diameter which defines the difference in output speed. From the above image, there is a 12 tooth gear, driving a 36 tooth gear which would constitute a 3:1 ratio.&#x20;
  
 ```
-## Placeholder Subheading
-placeholder text for this paragraph
+## Subheading 3
+Placeholder paragraph 3
 File: `hardware/misc.-vex-parts-1/motion/traction-wheels.md`
 ```diff
  
@@ -32,8 +32,8 @@ File: `hardware/misc.-vex-parts-1/motion/traction-wheels.md`
  ## Variations
  
 ```
-## Placeholder Subheading
-placeholder text for this paragraph
+## Subheading 4
+Placeholder paragraph 4
 File: `hardware/misc.-vex-parts-1/structure/c-channels-and-angles.md`
 ```diff
  # C-Channels and Angles
@@ -44,8 +44,8 @@ File: `hardware/misc.-vex-parts-1/structure/c-channels-and-angles.md`
  #### 2 Hole Width
  
 ```
-## Placeholder Subheading
-placeholder text for this paragraph
+## Subheading 5
+Placeholder paragraph 5
 File: `hardware/vex-joints.md`
 ```diff
  
@@ -65,8 +65,8 @@ File: `hardware/vex-joints.md`
  1. The c-channel that the joint is mounted to, which is typically mounted to the base
  2. The screw that the arm rotates around
 ```
-## Placeholder Subheading
-placeholder text for this paragraph
+## Subheading 6
+Placeholder paragraph 6
 File: `team-administration/vex-worlds-livestream-archive.md`
 ```diff
  [Matches, Playoffs & Awards](https://www.vexworlds.tv/#/viewer/?broadcast=aqrcikx0gfmaryvvhkgv)

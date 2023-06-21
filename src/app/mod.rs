@@ -11,7 +11,7 @@ use iced::widget::{
 };
 use iced::{Application, Element, Length, Color, Command};
 use git2::{ObjectType, Repository, Oid};
-use iced_native::widget::horizontal_space;
+use iced_native::widget::{horizontal_space, vertical_space};
 
 #[derive(Default)]
 pub struct ConseilApp {
@@ -19,12 +19,16 @@ pub struct ConseilApp {
     commit_id_input: String,
     repo: Option<Repository>,
     scroll_content: Vec<Content>,
+    subheading_inputs: Vec<String>,
+    paragraph_inputs: Vec<String>,
 }
 
 #[derive(Debug, Clone)]
 pub enum Message {
     PathInputChanged(String),
     CommitInputChanged(String),
+    SubheadingInputChanged(usize, String),
+    ParagraphInputChanged(usize, String),
     SearchButtonPressed,
     ExportButtonPressed,
 }
@@ -48,6 +52,8 @@ impl Application for ConseilApp {
         match message {
             Message::PathInputChanged(value) => self.path_input = value,
             Message::CommitInputChanged(value) => self.commit_id_input = value,
+            Message::SubheadingInputChanged(index, value) => self.subheading_inputs[index] = value,
+            Message::ParagraphInputChanged(index, value) => self.paragraph_inputs[index] = value,
             Message::SearchButtonPressed => {
                 self.repo = match Repository::open(self.path_input.as_str()) {
                     Ok(repo) => Some(repo),
@@ -66,7 +72,7 @@ impl Application for ConseilApp {
 
     fn view(&self) -> Element<Message> {
 
-        let title = text("Conseil").size(30).style(Color::from([0.0, 0.5, 1.0]));
+        let title = text("Conseil").size(48).style(Color::from([0.0, 0.5, 1.0]));
 
         let path_input = text_input("Type repository path...", &self.path_input)
             .on_input(Message::PathInputChanged)
@@ -89,19 +95,34 @@ impl Application for ConseilApp {
         let scrollable = scrollable(
             self.scroll_content.iter().fold(
                 column![].width(Length::Fill),
-                |column, line| {
-                    column.push(match line {
-                        Content::Heading(line) => column![text(line).size(60).style(Color::from([1.0, 0.5, 0.0]))],
-                        Content::Subheading(line) => column![text(line).size(32).style(Color::from([0.9, 0.9, 0.9]))],
+                |column, content| {
+                    column.push(match content {
+                        Content::Heading(line) => column![
+                            text(line).size(60).style(Color::from([1.0, 0.5, 0.0])),
+                            vertical_space(20.0),
+                        ],
+                        Content::Subheading(index, _) => {
+                            column![
+                                text_input("Subheading", &self.subheading_inputs[*index])
+                                    .on_input(|s| Message::SubheadingInputChanged(*index, s))
+                                    .size(32)
+                                    .padding(10)
+                            ]
+                        }
                         Content::Filename(line) => column![text(format!("File: {}", line))],
-                        Content::Paragraph(line, color) => column![text(line).style(color.clone())],
+                        Content::Paragraph(index, _) => {
+                            column![
+                                text_input("Subheading", &self.paragraph_inputs[*index])
+                                    .on_input(|s| Message::ParagraphInputChanged(*index, s))
+                            ]
+                        },
                         Content::Hunk(arr) => arr.iter().fold(
                             column![horizontal_rule(10.0)].width(Length::Fill),
                             |column, elem| {
                                 let (line, color) = elem;
                                 column.push(text(line).style(color.clone()))
                             }
-                        ).push(horizontal_rule(10.0))
+                        ).push(horizontal_rule(10.0)).push(vertical_space(20.0))
                     })
                 },
             )
@@ -109,10 +130,10 @@ impl Application for ConseilApp {
 
         let content = column![
             row![title, horizontal_space(Length::Fill), export_button],
-            horizontal_rule(10),
+            horizontal_rule(5),
             path_input,
             row![commit_input, search_button].spacing(10),
-            horizontal_rule(10),
+            horizontal_rule(5),
             scrollable,
         ]
         .spacing(20)
@@ -137,6 +158,8 @@ impl ConseilApp {
             Some(_) => {
                 
                 self.scroll_content.clear();
+                self.subheading_inputs.clear();
+                self.paragraph_inputs.clear();
 
                 let repo = self.repo.as_ref().unwrap();
                 
@@ -172,8 +195,12 @@ impl ConseilApp {
                     } else {
                         if current_delta != delta.old_file().path().unwrap().to_str().unwrap().to_string() {
                             if !current_hunk.is_empty() {
-                                self.scroll_content.push(Content::Subheading("Placeholder Subheading".to_string()));
-                                self.scroll_content.push(Content::Paragraph("placeholder text for this paragraph\n".to_string(), Color::WHITE));
+                                self.scroll_content.push(Content::Subheading(self.subheading_inputs.len(), format!("Subheading {}", self.subheading_inputs.len() + 1)));
+                                self.subheading_inputs.push(format!("Subheading {}", self.subheading_inputs.len() + 1));
+
+                                self.scroll_content.push(Content::Paragraph(self.paragraph_inputs.len(), format!("Placeholder paragraph {}", self.paragraph_inputs.len() + 1)));
+                                self.paragraph_inputs.push(format!("Placeholder paragraph {}", self.paragraph_inputs.len() + 1));
+
                                 self.scroll_content.push(Content::Filename(current_delta.clone()));
                                 self.scroll_content.push(Content::Hunk(current_hunk.clone()));
                                 current_hunk.clear();
@@ -209,7 +236,13 @@ impl ConseilApp {
             Ok(file) => file,
         };
 
-        self.scroll_content.iter().for_each(|content| {
+        self.scroll_content.iter().map(|content| {
+            match content {
+                Content::Subheading(idx, _) => Content::Subheading(*idx, self.subheading_inputs[*idx].clone()),
+                Content::Paragraph(idx, _) => Content::Paragraph(*idx, self.paragraph_inputs[*idx].clone()),
+                _ => content.clone(),
+            }
+        }).for_each(|content| {
             match file.write_all(content.to_md_string().as_bytes()) {
                 Err(why) => panic!("couldn't write to {}: {}", display, why),
                 Ok(_) => println!("successfully wrote to {}", display),
