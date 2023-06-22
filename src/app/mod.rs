@@ -1,5 +1,6 @@
 use crate::widgets::content::Content;
 
+use std::collections::HashMap;
 use std::fs::{self, File};
 use std::io::prelude::*;
 use std::path::Path;
@@ -12,13 +13,15 @@ use iced::widget::{
 use iced::{Application, Element, Length, Color, Command};
 use git2::{ObjectType, Repository, Oid};
 use iced_aw::{Split, split};
-use iced_native::widget::{horizontal_space, vertical_space};
+use iced_native::widget::{horizontal_space, vertical_space, pick_list};
 
 #[derive(Default)]
 pub struct ConseilApp {
     search_input: String,
     search_results: Vec<String>,
-    commit_id_input: String,
+    commit_id: Option<String>,
+    commit_id_arr: Vec<String>,
+    commit_lookup_table: HashMap<String, String>,
     repo: Option<Repository>,
     repo_name: String,
     scroll_content: Vec<Content>,
@@ -31,11 +34,10 @@ pub struct ConseilApp {
 pub enum Message {
     OnVertResize(u16),
     SearchInputChanged(String),
-    CommitInputChanged(String),
+    CommitIDSelected(String),
     SubheadingInputChanged(usize, String),
     ParagraphInputChanged(usize, String),
     RepoButtonPressed(String),
-    SearchButtonPressed,
     ExportButtonPressed,
 }
 
@@ -94,7 +96,10 @@ impl Application for ConseilApp {
                     
                 }
             }
-            Message::CommitInputChanged(value) => self.commit_id_input = value,
+            Message::CommitIDSelected(value) => {
+                self.commit_id = Some(value);
+                self.write_content();
+            }
             Message::SubheadingInputChanged(index, value) => self.subheading_inputs[index] = value,
             Message::ParagraphInputChanged(index, value) => self.paragraph_inputs[index] = value,
             Message::RepoButtonPressed(path) => {
@@ -104,9 +109,41 @@ impl Application for ConseilApp {
                 };
 
                 self.repo_name = path.as_str().to_string();
-            }
-            Message::SearchButtonPressed => {
-                self.write_content();
+
+                self.scroll_content.clear();
+
+                self.commit_id = None;
+                self.commit_id_arr.clear();
+
+                match self.repo {
+                    None => {}
+                    Some(_) => {
+                        let repo = self.repo.as_ref().unwrap();
+
+                        let head = repo.head().expect("Could not find head");
+                        let obj = head.resolve().expect("Could not resolve").peel(ObjectType::Commit).expect("Could not peel to commit");
+                        let mut commit = obj.into_commit().map_err(|_| git2::Error::from_str("Couldn't find commit")).expect("Could not find head");
+
+                        let key = format!("{} : {}...", commit.message().unwrap().trim(), commit.id().to_string().get(0..6).unwrap());
+                        let value = commit.id().to_string();
+                        self.commit_lookup_table.insert(key.clone(), value);
+                        self.commit_id_arr.push(key);
+
+                        while self.commit_id_arr.len() < 25 {
+                            match commit.parent(0) {
+                                Err(_) => break,
+                                Ok(parent) => {
+                                    let key = format!("{} : {}...", parent.message().unwrap().trim(), parent.id().to_string().get(0..6).unwrap());
+                                    let value = parent.id().to_string();
+                                    self.commit_lookup_table.insert(key.clone(), value);
+                                    self.commit_id_arr.push(key);
+                                    commit = parent;
+                                }
+                            }
+                        }
+                    }
+                }
+
             }
             Message::ExportButtonPressed => {
                 self.make_markdown_file();
@@ -125,14 +162,11 @@ impl Application for ConseilApp {
             _ => self.repo_name.as_str(),
         })).size(32);
                 
-        let commit_input = text_input("Type commit ID...", &self.commit_id_input)
-            .on_input(Message::CommitInputChanged)
-            .padding(10)
-            .size(20);
-
-        let search_button = button("Search")
-            .padding(10)
-            .on_press(Message::SearchButtonPressed);
+        let commit_picker = pick_list(
+            self.commit_id_arr.clone(), 
+            self.commit_id.clone(), 
+            Message::CommitIDSelected
+        ).width(Length::Fill);
 
         let export_button = button("Export")
             .padding(10)
@@ -178,7 +212,7 @@ impl Application for ConseilApp {
             row![title, horizontal_space(Length::Fill), export_button],
             horizontal_rule(5),
             repo_text,
-            row![commit_input, search_button].spacing(10),
+            commit_picker,
             horizontal_rule(5),
             commit_info,
         ]
@@ -232,8 +266,13 @@ impl ConseilApp {
                 self.paragraph_inputs.clear();
 
                 let repo = self.repo.as_ref().unwrap();
+
+                let cid = match self.commit_id.clone() {
+                    None => "".to_string(),
+                    Some(s) => self.commit_lookup_table[&s].clone(),
+                };
                 
-                let oid = Oid::from_str(&self.commit_id_input.as_str());
+                let oid = Oid::from_str(cid.as_str());
                 let commit = match oid {
                     Ok(o) => {
                         repo.find_commit(o)
