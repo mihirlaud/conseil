@@ -1,34 +1,40 @@
 use crate::widgets::content::Content;
 
-use std::fs::File;
+use std::fs::{self, File};
 use std::io::prelude::*;
 use std::path::Path;
 
 use iced::theme::Theme;
 use iced::widget::{
-    button, column, container, horizontal_rule,
+    button, column, horizontal_rule,
     row, scrollable, text, text_input,
 };
 use iced::{Application, Element, Length, Color, Command};
 use git2::{ObjectType, Repository, Oid};
+use iced_aw::{Split, split};
 use iced_native::widget::{horizontal_space, vertical_space};
 
 #[derive(Default)]
 pub struct ConseilApp {
-    path_input: String,
+    search_input: String,
+    search_results: Vec<String>,
     commit_id_input: String,
     repo: Option<Repository>,
+    repo_name: String,
     scroll_content: Vec<Content>,
     subheading_inputs: Vec<String>,
     paragraph_inputs: Vec<String>,
+    vert_divider_pos: Option<u16>,
 }
 
 #[derive(Debug, Clone)]
 pub enum Message {
-    PathInputChanged(String),
+    OnVertResize(u16),
+    SearchInputChanged(String),
     CommitInputChanged(String),
     SubheadingInputChanged(usize, String),
     ParagraphInputChanged(usize, String),
+    RepoButtonPressed(String),
     SearchButtonPressed,
     ExportButtonPressed,
 }
@@ -40,7 +46,10 @@ impl Application for ConseilApp {
     type Theme = Theme;
 
     fn new(_flags: Self::Flags) -> (Self, Command<Message>) {
-        (ConseilApp::default(), Command::none())
+        (Self {
+            vert_divider_pos: Some(300),
+            ..Default::default()
+        }, Command::none())
     }
 
     fn title(&self) -> String {
@@ -50,16 +59,53 @@ impl Application for ConseilApp {
     fn update(&mut self, message: Message) -> Command<Message> {
 
         match message {
-            Message::PathInputChanged(value) => self.path_input = value,
+            Message::OnVertResize(pos) => self.vert_divider_pos = Some(
+                if pos < 300 {
+                    300
+                } else if pos > 500 {
+                    500
+                } else {
+                    pos
+                }
+            ),
+            Message::SearchInputChanged(value) => {
+                self.search_input = value;
+                self.search_results.clear();
+
+                let dir = Path::new(&self.search_input);
+
+                if dir.is_dir() {
+                    match fs::read_dir(dir) {
+                        Ok(entries) => {
+                            for entry in entries {
+                                match entry {
+                                    Ok(e) => {
+                                        let path = e.path();
+                                        if path.is_dir() {
+                                            self.search_results.push(path.to_str().unwrap().to_string());
+                                        }
+                                    }
+                                    Err(_) => ()
+                                }
+                            }
+                        }
+                        Err(_) => ()
+                    }
+                    
+                }
+            }
             Message::CommitInputChanged(value) => self.commit_id_input = value,
             Message::SubheadingInputChanged(index, value) => self.subheading_inputs[index] = value,
             Message::ParagraphInputChanged(index, value) => self.paragraph_inputs[index] = value,
-            Message::SearchButtonPressed => {
-                self.repo = match Repository::open(self.path_input.as_str()) {
+            Message::RepoButtonPressed(path) => {
+                self.repo = match Repository::open(path.as_str()) {
                     Ok(repo) => Some(repo),
                     Err(_) => None,
                 };
 
+                self.repo_name = path.as_str().to_string();
+            }
+            Message::SearchButtonPressed => {
                 self.write_content();
             }
             Message::ExportButtonPressed => {
@@ -74,10 +120,10 @@ impl Application for ConseilApp {
 
         let title = text("Conseil").size(48).style(Color::from([0.0, 0.5, 1.0]));
 
-        let path_input = text_input("Type repository path...", &self.path_input)
-            .on_input(Message::PathInputChanged)
-            .padding(10)
-            .size(20);
+        let repo_text = text(format!("Repository: {}", match self.repo_name.as_str() {
+            "" => "None selected",
+            _ => self.repo_name.as_str(),
+        })).size(32);
                 
         let commit_input = text_input("Type commit ID...", &self.commit_id_input)
             .on_input(Message::CommitInputChanged)
@@ -92,7 +138,7 @@ impl Application for ConseilApp {
             .padding(10)
             .on_press(Message::ExportButtonPressed);
 
-        let scrollable = scrollable(
+        let commit_info = scrollable(
             self.scroll_content.iter().fold(
                 column![].width(Length::Fill),
                 |column, content| {
@@ -131,20 +177,44 @@ impl Application for ConseilApp {
         let content = column![
             row![title, horizontal_space(Length::Fill), export_button],
             horizontal_rule(5),
-            path_input,
+            repo_text,
             row![commit_input, search_button].spacing(10),
             horizontal_rule(5),
-            scrollable,
+            commit_info,
         ]
         .spacing(20)
         .padding(20);
 
-        container(content)
-            .width(Length::Fill)
-            .height(Length::Fill)
-            .center_x()
-            .center_y()
-            .into()
+        let results = scrollable(
+            self.search_results.iter().fold(
+                column![],
+                |column, result| {
+                    column.push(
+                        button(result.as_str())
+                            .padding(10)
+                            .width(Length::Fill)
+                            .on_press(Message::RepoButtonPressed(result.clone()))
+                    )
+                }
+            ));
+
+        let sidebar = column![
+            text_input("Search for repo...", &self.search_input)
+                .on_input(Message::SearchInputChanged)
+                .size(20)
+                .padding(10),
+            results
+        ]
+        .spacing(20)
+        .padding(20);
+
+        Split::new(
+            sidebar,
+            content,
+            self.vert_divider_pos,
+            split::Axis::Vertical,
+            Message::OnVertResize,
+        ).into()
     }
 
     fn theme(&self) -> Theme {
