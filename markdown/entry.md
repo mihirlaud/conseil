@@ -1,13 +1,13 @@
-# Heading
-Placeholder paragraph 1
+# Heading 1
+Paragraph 1
 ## Subheading 1
-Placeholder paragraph 2
+Paragraph 2
 ```diff
 BBinary files /dev/null and b/.gitbook/assets/Panelized Board CPL (2).csv differ
 ```
 File: `.gitbook/assets/Panelized Board CPL (2).csv`
 ## Subheading 2
-Placeholder paragraph 3
+Paragraph 3
 ```diff
  
  <figure><img src="../../.gitbook/assets/driving_gear.png" alt=""><figcaption><p>Sourced from RoboMatter</p></figcaption></figure>
@@ -20,7 +20,7 @@ Placeholder paragraph 3
 ```
 File: `hardware/design-fundamentals/gear-ratios.md`
 ## Subheading 3
-Placeholder paragraph 4
+Paragraph 4
 ```diff
  
  <figure><img src="../../../.gitbook/assets/tractionwheelprogression.png" alt=""><figcaption><p>From left to right: 2.75", 3.25", and 4" Anti-Static Wheels </p></figcaption></figure>
@@ -33,7 +33,7 @@ Placeholder paragraph 4
 ```
 File: `hardware/misc.-vex-parts-1/motion/traction-wheels.md`
 ## Subheading 4
-Placeholder paragraph 5
+Paragraph 5
 ```diff
  # C-Channels and Angles
  
@@ -45,7 +45,7 @@ Placeholder paragraph 5
 ```
 File: `hardware/misc.-vex-parts-1/structure/c-channels-and-angles.md`
 ## Subheading 5
-Placeholder paragraph 6
+Paragraph 6
 ```diff
  
  ![Model of a Single-Bearing Screw Joint in CAD](../.gitbook/assets/screwjoint.png)
@@ -66,7 +66,7 @@ Placeholder paragraph 6
 ```
 File: `hardware/vex-joints.md`
 ## Subheading 6
-Placeholder paragraph 7
+Paragraph 7
 ```diff
  [Matches, Playoffs & Awards](https://www.vexworlds.tv/#/viewer/?broadcast=aqrcikx0gfmaryvvhkgv)
  
@@ -79,4 +79,4 @@ Placeholder paragraph 7
 ```
 File: `team-administration/vex-worlds-livestream-archive.md`
 ## Subheading 7
-Placeholder paragraph 8
+Paragraph 8

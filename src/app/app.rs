@@ -6,10 +6,7 @@ use std::io::prelude::*;
 use std::path::Path;
 
 use iced::theme::Theme;
-use iced::widget::{
-    button, column, horizontal_rule,
-    row, scrollable, text, text_input,
-};
+use iced::widget::{button, column, horizontal_rule, row, scrollable, text, text_input};
 use iced::{Application, Element, Length, Color, Command};
 use git2::{ObjectType, Repository, Oid};
 use iced_aw::{Split, split};
@@ -30,9 +27,7 @@ pub struct ConseilApp {
     repo: Option<Repository>,
     repo_name: String,
     scroll_content: Vec<Content>,
-    heading_inputs: Vec<String>,
-    subheading_inputs: Vec<String>,
-    paragraph_inputs: Vec<String>,
+    inputs: Vec<Vec<String>>,
     vert_divider_pos: Option<u16>,
 }
 
@@ -56,9 +51,11 @@ impl Application for ConseilApp {
 
     fn new(_flags: Self::Flags) -> (Self, Command<Message>) {
         let config = Config::from_path("configs/default.toml");
+        let inputs = vec![vec![], vec![], vec![]];
 
         (Self {
             config,
+            inputs,
             vert_divider_pos: Some(300),
             ..Default::default()
         }, Command::none())
@@ -110,9 +107,9 @@ impl Application for ConseilApp {
                 self.commit_id = Some(value);
                 self.write_content();
             }
-            Message::HeadingInputChanged(index, value) => self.heading_inputs[index] = value,
-            Message::SubheadingInputChanged(index, value) => self.subheading_inputs[index] = value,
-            Message::ParagraphInputChanged(index, value) => self.paragraph_inputs[index] = value,
+            Message::HeadingInputChanged(index, value) => self.inputs[0][index] = value,
+            Message::SubheadingInputChanged(index, value) => self.inputs[1][index] = value,
+            Message::ParagraphInputChanged(index, value) => self.inputs[2][index] = value,
             Message::RepoButtonPressed(path) => {
                 self.repo = match Repository::open(path.as_str()) {
                     Ok(repo) => Some(repo),
@@ -189,14 +186,14 @@ impl Application for ConseilApp {
                 |column, content| {
                     column.push(match content {
                         Content::Heading(index, _) => column![
-                            text_input("Heading", &self.heading_inputs[*index])
+                            text_input("Heading", &self.inputs[0][*index])
                                 .on_input(|s| Message::HeadingInputChanged(*index, s))
                                 .size(60).padding(10),
                             vertical_space(20.0),
                         ],
                         Content::Subheading(index, _) => {
                             column![
-                                text_input("Subheading", &self.subheading_inputs[*index])
+                                text_input("Subheading", &self.inputs[1][*index])
                                     .on_input(|s| Message::SubheadingInputChanged(*index, s))
                                     .size(32)
                                     .padding(10)
@@ -205,7 +202,7 @@ impl Application for ConseilApp {
                         Content::Filename(line) => column![text(format!("File: {}", line))],
                         Content::Paragraph(index, _) => {
                             column![
-                                text_input("Subheading", &self.paragraph_inputs[*index])
+                                text_input("Paragraph", &self.inputs[2][*index])
                                     .on_input(|s| Message::ParagraphInputChanged(*index, s))
                             ]
                         },
@@ -255,13 +252,15 @@ impl Application for ConseilApp {
         .spacing(20)
         .padding(20);
 
-        Split::new(
+        let split = Split::new(
             sidebar,
             content,
             self.vert_divider_pos,
             split::Axis::Vertical,
             Message::OnVertResize,
-        ).into()
+        ).into();
+
+        split
     }
 
     fn theme(&self) -> Theme {
@@ -283,24 +282,14 @@ impl ConseilApp {
         };
                 
         self.scroll_content.clear();
-        self.subheading_inputs.clear();
-        self.paragraph_inputs.clear();
+        self.inputs = vec![vec![], vec![], vec![]];
 
         for piece in self.config.get_intro_content() {
             match piece {
                 Value::String(s) => match s.as_str() {
-                    "heading" => {
-                        self.scroll_content.push(Content::Heading(self.heading_inputs.len(), format!("Heading {}", self.heading_inputs.len() + 1)));
-                        self.heading_inputs.push(format!("Heading {}", self.heading_inputs.len() + 1));
-                    }
-                    "subheading" => {
-                        self.scroll_content.push(Content::Subheading(self.subheading_inputs.len(), format!("Subheading {}", self.subheading_inputs.len() + 1)));
-                        self.subheading_inputs.push(format!("Subheading {}", self.subheading_inputs.len() + 1));
-                    }
-                    "paragraph" => {
-                        self.scroll_content.push(Content::Paragraph(self.paragraph_inputs.len(), format!("Placeholder paragraph {}", self.paragraph_inputs.len() + 1)));
-                        self.paragraph_inputs.push(format!("Placeholder paragraph {}", self.paragraph_inputs.len() + 1));
-                    }
+                    "heading" => Self::add_text_edit(&mut self.inputs, &mut self.scroll_content, 0),
+                    "subheading" => Self::add_text_edit(&mut self.inputs, &mut self.scroll_content, 1),
+                    "paragraph" => Self::add_text_edit(&mut self.inputs, &mut self.scroll_content, 2),
                     _ => {}
                 }
                 _ => {}
@@ -339,25 +328,15 @@ impl ConseilApp {
             if line.origin() == 'H' || line.origin() == 'F' {
                 true
             } else {
-                if current_delta != delta.old_file().path().unwrap().to_str().unwrap().to_string() {
+                if current_delta != delta.old_file().path().unwrap().to_string_lossy().to_string() {
                     if !current_hunk.is_empty() {
                         for piece in self.config.get_hunk_content() {
                             match piece {
                                 Value::String(s) => match s.as_str() {
-                                    "subheading" => {
-                                        self.scroll_content.push(Content::Subheading(self.subheading_inputs.len(), format!("Subheading {}", self.subheading_inputs.len() + 1)));
-                                        self.subheading_inputs.push(format!("Subheading {}", self.subheading_inputs.len() + 1));
-                                    }
-                                    "paragraph" => {
-                                        self.scroll_content.push(Content::Paragraph(self.paragraph_inputs.len(), format!("Placeholder paragraph {}", self.paragraph_inputs.len() + 1)));
-                                        self.paragraph_inputs.push(format!("Placeholder paragraph {}", self.paragraph_inputs.len() + 1));
-                                    }
-                                    "filename" => {
-                                        self.scroll_content.push(Content::Filename(current_delta.clone()));
-                                    }
-                                    "diff" => {
-                                        self.scroll_content.push(Content::Hunk(current_hunk.clone()));
-                                    }
+                                    "subheading" => Self::add_text_edit(&mut self.inputs, &mut self.scroll_content, 1),
+                                    "paragraph" => Self::add_text_edit(&mut self.inputs, &mut self.scroll_content, 2),
+                                    "filename" => self.scroll_content.push(Content::Filename(current_delta.clone())),
+                                    "diff" => self.scroll_content.push(Content::Hunk(current_hunk.clone())),
                                     _ => {}
                                 }
                                 _ => {}
@@ -365,7 +344,7 @@ impl ConseilApp {
                         }
                         current_hunk.clear();
                     }
-                    current_delta = delta.old_file().path().unwrap().to_str().unwrap().to_string();
+                    current_delta = delta.old_file().path().unwrap().to_string_lossy().to_string();
                 }
                 match std::str::from_utf8(line.content()) {
                     Ok(s) => current_hunk.push((
@@ -386,23 +365,32 @@ impl ConseilApp {
         for piece in self.config.get_outro_content() {
             match piece {
                 Value::String(s) => match s.as_str() {
-                    "heading" => {
-                        self.scroll_content.push(Content::Heading(self.heading_inputs.len(), format!("Heading {}", self.heading_inputs.len() + 1)));
-                        self.heading_inputs.push(format!("Heading {}", self.heading_inputs.len() + 1));
-                    }
-                    "subheading" => {
-                        self.scroll_content.push(Content::Subheading(self.subheading_inputs.len(), format!("Subheading {}", self.subheading_inputs.len() + 1)));
-                        self.subheading_inputs.push(format!("Subheading {}", self.subheading_inputs.len() + 1));
-                    }
-                    "paragraph" => {
-                        self.scroll_content.push(Content::Paragraph(self.paragraph_inputs.len(), format!("Placeholder paragraph {}", self.paragraph_inputs.len() + 1)));
-                        self.paragraph_inputs.push(format!("Placeholder paragraph {}", self.paragraph_inputs.len() + 1));
-                    }
+                    "heading" => Self::add_text_edit(&mut self.inputs, &mut self.scroll_content, 0),
+                    "subheading" => Self::add_text_edit(&mut self.inputs, &mut self.scroll_content, 1),
+                    "paragraph" => Self::add_text_edit(&mut self.inputs, &mut self.scroll_content, 2),
                     _ => {}
                 }
                 _ => {}
             }
         }
+    }
+
+    fn add_text_edit(
+        inputs: &mut Vec<Vec<String>>, 
+        scroll_content: &mut Vec<Content>, 
+        selector: usize) {
+        let idx = inputs[selector].len();
+        let txt = format!("{} {}", match selector {
+            0 => "Heading",
+            1 => "Subheading",
+            _ => "Paragraph",
+        }, idx + 1);
+        scroll_content.push(match selector {
+            0 => Content::Heading(idx, txt.clone()),
+            1 => Content::Subheading(idx, txt.clone()),
+            _ => Content::Paragraph(idx, txt.clone()),
+        });
+        inputs[selector].push(txt);
     }
 
     fn make_markdown_file(&self) {
@@ -416,8 +404,9 @@ impl ConseilApp {
 
         self.scroll_content.iter().map(|content| {
             match content {
-                Content::Subheading(idx, _) => Content::Subheading(*idx, self.subheading_inputs[*idx].clone()),
-                Content::Paragraph(idx, _) => Content::Paragraph(*idx, self.paragraph_inputs[*idx].clone()),
+                Content::Heading(idx, _) => Content::Heading(*idx, self.inputs[0][*idx].clone()),
+                Content::Subheading(idx, _) => Content::Subheading(*idx, self.inputs[1][*idx].clone()),
+                Content::Paragraph(idx, _) => Content::Paragraph(*idx, self.inputs[2][*idx].clone()),
                 _ => content.clone(),
             }
         }).for_each(|content| {
