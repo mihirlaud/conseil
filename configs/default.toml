@@ -1,0 +1,19 @@
+[intro]
+content = [
+    "heading",
+    "paragraph",
+]
+
+[hunk]
+content = [
+    "subheading",
+    "paragraph",
+    "diff",
+    "filename",
+]
+
+[outro]
+content = [
+    "subheading",
+    "paragraph",
+]

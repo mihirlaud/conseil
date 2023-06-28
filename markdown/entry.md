@@ -1,14 +1,13 @@
-# GITBOOK-498: Update CPL File
-
-## Subheading 1
+# Heading
 Placeholder paragraph 1
-File: `.gitbook/assets/Panelized Board CPL (2).csv`
+## Subheading 1
+Placeholder paragraph 2
 ```diff
 BBinary files /dev/null and b/.gitbook/assets/Panelized Board CPL (2).csv differ
 ```
-## Fix 'Gear Ratio' Markdown
-A slight change was made to the Markdown for the Gear Ratio section under Des
-File: `hardware/design-fundamentals/gear-ratios.md`
+File: `.gitbook/assets/Panelized Board CPL (2).csv`
+## Subheading 2
+Placeholder paragraph 3
 ```diff
  
  <figure><img src="../../.gitbook/assets/driving_gear.png" alt=""><figcaption><p>Sourced from RoboMatter</p></figcaption></figure>
@@ -19,9 +18,9 @@ File: `hardware/design-fundamentals/gear-ratios.md`
  Gear ratios are often simplified fractions of the number of teeth on each gear. This is because (at least in Vex) gears have a proportional number of teeth to their diameter which defines the difference in output speed. From the above image, there is a 12 tooth gear, driving a 36 tooth gear which would constitute a 3:1 ratio.&#x20;
  
 ```
+File: `hardware/design-fundamentals/gear-ratios.md`
 ## Subheading 3
-Placeholder paragraph 3
-File: `hardware/misc.-vex-parts-1/motion/traction-wheels.md`
+Placeholder paragraph 4
 ```diff
  
  <figure><img src="../../../.gitbook/assets/tractionwheelprogression.png" alt=""><figcaption><p>From left to right: 2.75", 3.25", and 4" Anti-Static Wheels </p></figcaption></figure>
@@ -32,9 +31,9 @@ File: `hardware/misc.-vex-parts-1/motion/traction-wheels.md`
  ## Variations
  
 ```
+File: `hardware/misc.-vex-parts-1/motion/traction-wheels.md`
 ## Subheading 4
-Placeholder paragraph 4
-File: `hardware/misc.-vex-parts-1/structure/c-channels-and-angles.md`
+Placeholder paragraph 5
 ```diff
  # C-Channels and Angles
  
@@ -44,9 +43,9 @@ File: `hardware/misc.-vex-parts-1/structure/c-channels-and-angles.md`
  #### 2 Hole Width
  
 ```
+File: `hardware/misc.-vex-parts-1/structure/c-channels-and-angles.md`
 ## Subheading 5
-Placeholder paragraph 5
-File: `hardware/vex-joints.md`
+Placeholder paragraph 6
 ```diff
  
  ![Model of a Single-Bearing Screw Joint in CAD](../.gitbook/assets/screwjoint.png)
@@ -65,9 +64,9 @@ File: `hardware/vex-joints.md`
  1. The c-channel that the joint is mounted to, which is typically mounted to the base
  2. The screw that the arm rotates around
 ```
+File: `hardware/vex-joints.md`
 ## Subheading 6
-Placeholder paragraph 6
-File: `team-administration/vex-worlds-livestream-archive.md`
+Placeholder paragraph 7
 ```diff
  [Matches, Playoffs & Awards](https://www.vexworlds.tv/#/viewer/?broadcast=aqrcikx0gfmaryvvhkgv)
  
@@ -78,3 +77,6 @@ File: `team-administration/vex-worlds-livestream-archive.md`
  
  Spirit Division\
 ```
+File: `team-administration/vex-worlds-livestream-archive.md`
+## Subheading 7
+Placeholder paragraph 8
