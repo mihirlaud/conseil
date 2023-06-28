@@ -8,6 +8,5 @@ edition = "2021"
 [dependencies]
 git2 = "0.17.2"
 iced = "0.9.0"
-iced_aw = "0.5.2"
+iced_aw = { version = "0.5.2", default-features = false, features = ["split", "modal"] }
 iced_native = "0.10.3"
-time = "0.3.22"

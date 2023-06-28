@@ -13,6 +13,7 @@ use iced::widget::{
 use iced::{Application, Element, Length, Color, Command};
 use git2::{ObjectType, Repository, Oid};
 use iced_aw::{Split, split};
+use iced_native::theme;
 use iced_native::widget::{horizontal_space, vertical_space, pick_list};
 
 #[derive(Default)]
@@ -155,7 +156,7 @@ impl Application for ConseilApp {
 
     fn view(&self) -> Element<Message> {
 
-        let title = text("Conseil").size(48).style(Color::from([0.0, 0.5, 1.0]));
+        let title = text("Conseil").size(48).style(self.theme().palette().primary);
 
         let repo_text = text(format!("Repository: {}", match self.repo_name.as_str() {
             "" => "None selected",
@@ -252,7 +253,13 @@ impl Application for ConseilApp {
     }
 
     fn theme(&self) -> Theme {
-        Theme::Dark
+        Theme::custom(theme::Palette {
+            background: Color::from_rgb(0.2148, 0.2266, 0.2109),
+            text: Color::WHITE,
+            primary: Color::from_rgb(0.8047, 0.7188, 0.5313),
+            success: Color::from_rgb(0.0, 1.0, 0.0),
+            danger: Color::from_rgb(1.0, 0.0, 0.0),
+        })
     }
 }
 
